@@ -7,6 +7,8 @@ const csSwal = {
           Swal.mixin({
                title,
                text,
+               allowOutsideClick: false,
+               allowEscapeKey: false,
                didOpen: () => {
                     Swal.showLoading();
                },
@@ -14,30 +16,35 @@ const csSwal = {
      fireSuccess: (
           title = "Sucesso!",
           text = "Operação concluída com sucesso!",
+          timer = 3000,
      ) =>
           Swal.mixin({
                title,
                text,
+               timer,
                icon: "success",
+               showConfirmButton: false,
                didOpen: () => {
                     Swal.hideLoading();
                },
-               showConfirmButton: false,
           }).fire(),
 
      fireError: (
           title = "Erro!",
           text = "Ocorreu um erro durante a operação!",
+          timer = 3000,
      ) =>
           Swal.mixin({
                title,
                text,
+               timer,
                icon: "error",
                showConfirmButton: false,
                didOpen: () => {
                     Swal.hideLoading();
                },
           }).fire(),
+     close: () => Swal.close(),
 };
 
 export default csSwal;

@@ -3,11 +3,15 @@ import CsInput from "@/components/cs/cs-input/CsInput.vue";
 import { computed, reactive, ref } from "vue";
 import { email, helpers, minLength, required } from "@vuelidate/validators";
 import { useVuelidate } from "@vuelidate/core";
-import Swal from "sweetalert2";
+import csSwal from "@/utils/cs-swal";
+import $http from "@/http-common";
+import { error } from "console";
+import router from "@/router";
 
 const form = reactive({
      email: "",
      password: "",
+     passwordConfirmation: "",
      name: "",
 });
 
@@ -27,6 +31,16 @@ const rules = computed(() => {
                     minLength(6),
                ),
           },
+          passwordConfirmation: {
+               required: helpers.withMessage(
+                    "Confirme a Senha é obrigatória",
+                    required,
+               ),
+               sameAs: helpers.withMessage(
+                    "As senhas devem ser iguais",
+                    (value) => value === form.password,
+               ),
+          },
      };
 });
 
@@ -35,18 +49,27 @@ const $v = useVuelidate(rules, form);
 const submitted = ref(false);
 
 const onSubmit = () => {
-     Swal.fire({
-          title: "Processando...",
-          text: "Por favor, aguarde...",
-          didOpen: () => {
-               Swal.showLoading();
-          },
-     });
+     csSwal.fireLoading();
+
      submitted.value = true;
      $v.value.$touch();
      if ($v.value.$invalid) {
+          csSwal.close();
           return;
      }
+
+     $http.api
+          .post("user", {
+               ...form,
+          })
+          .then((response) => {
+               csSwal.fireSuccess().then(() => {
+                    router.push({ name: "login" });
+               });
+          })
+          .catch((error) => {
+               console.log(error);
+          });
 };
 </script>
 
@@ -90,6 +113,18 @@ const onSubmit = () => {
                               :error="{
                                    show: $v.password.$error && submitted,
                                    message: $v.password.$errors[0]?.$message.toString(),
+                              }"
+                         />
+                         <CsInput
+                              label="Confirme a Senha"
+                              placeholder="Confirme a Senha"
+                              type="password"
+                              v-model="$v.passwordConfirmation.$model"
+                              :error="{
+                                   show:
+                                        $v.passwordConfirmation.$error &&
+                                        submitted,
+                                   message: $v.passwordConfirmation.$errors[0]?.$message.toString(),
                               }"
                          />
                     </form>

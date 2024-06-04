@@ -4,17 +4,18 @@ import { computed, reactive, ref } from "vue";
 import { email, helpers, minLength, required } from "@vuelidate/validators";
 import { useVuelidate } from "@vuelidate/core";
 import csSwal from "@/utils/cs-swal";
+import $http from "@/http-common";
 
 const form = reactive({
-     email: "",
+     username: "",
      password: "",
 });
 
 const rules = computed(() => {
      return {
-          email: {
+          username: {
                required: helpers.withMessage("Email é obrigatório", required),
-               email: helpers.withMessage("Email inválido", email),
+               username: helpers.withMessage("Email inválido", email),
           },
           password: {
                required: helpers.withMessage("Senha é obrigatória", required),
@@ -32,11 +33,26 @@ const submitted = ref(false);
 
 const onSubmit = () => {
      csSwal.fireLoading();
+
      submitted.value = true;
      $v.value.$touch();
      if ($v.value.$invalid) {
+          csSwal.close();
           return;
      }
+
+     $http.authApi
+          .post("auth-token", {
+               ...form,
+          })
+          .then((response) => {
+               csSwal.fireSuccess().then(() => {
+                    localStorage.setItem("auth-token", response.data.token);
+               });
+          })
+          .catch(() => {
+               csSwal.fireError();
+          });
 };
 </script>
 
@@ -58,10 +74,10 @@ const onSubmit = () => {
                               label="Email"
                               placeholder="Email"
                               type="email"
-                              v-model="$v.email.$model"
+                              v-model="$v.username.$model"
                               :error="{
-                                   show: $v.email.$error && submitted,
-                                   message: $v.email.$errors[0]?.$message.toString(),
+                                   show: $v.username.$error && submitted,
+                                   message: $v.username.$errors[0]?.$message.toString(),
                               }"
                          />
                          <CsInput
